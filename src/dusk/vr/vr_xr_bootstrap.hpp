@@ -840,10 +840,14 @@ struct HandActions {
     // which physical input each subaction path is bound to.
     XrAction triggerValueAction = XR_NULL_HANDLE;   // FLOAT: index trigger, both hands
     XrAction squeezeValueAction = XR_NULL_HANDLE;   // FLOAT: grip squeeze, both hands
+    XrAction bumperAction = XR_NULL_HANDLE;   // BOOL
     XrAction thumbstickAction = XR_NULL_HANDLE;     // VECTOR2F: thumbstick, both hands
     XrAction primaryClickAction = XR_NULL_HANDLE;   // BOOL: A (right) / X (left)
     XrAction secondaryClickAction = XR_NULL_HANDLE; // BOOL: B (right) / Y (left)
+    XrAction tertiaryClickAction = XR_NULL_HANDLE; // BOOL
+    XrAction quaternaryClickAction = XR_NULL_HANDLE; // BOOL
     XrAction menuClickAction = XR_NULL_HANDLE;      // BOOL: menu button, left only
+    XrAction toggleThirdPersonAction = XR_NULL_HANDLE;      // BOOL
     // NEW (2026-08-04, per explicit user request "make the right stick
     // click the pause menu"): right thumbstick click, OR'd into PAD_BUTTON_START
     // alongside the pre-existing left menu button below -- both trigger
@@ -922,10 +926,14 @@ inline HandActions createHandActionSet(XrInstance instance) {
     };
     createAction(XR_ACTION_TYPE_FLOAT_INPUT, "trigger_value", "Trigger", &actions.triggerValueAction);
     createAction(XR_ACTION_TYPE_FLOAT_INPUT, "squeeze_value", "Squeeze", &actions.squeezeValueAction);
+    createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "bumper", "Bumper", &actions.bumperAction);
     createAction(XR_ACTION_TYPE_VECTOR2F_INPUT, "thumbstick", "Thumbstick", &actions.thumbstickAction);
     createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "primary_click", "Primary Button", &actions.primaryClickAction);
     createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "secondary_click", "Secondary Button", &actions.secondaryClickAction);
+    createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "tertiary_click", "Tertiary Button", &actions.tertiaryClickAction);
+    createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "quaternary_click", "Quaternary Button", &actions.quaternaryClickAction);
     createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "menu_click", "Menu", &actions.menuClickAction);
+    createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "third_person_click", "Toggle Third Person", &actions.toggleThirdPersonAction);
     createAction(XR_ACTION_TYPE_BOOLEAN_INPUT, "stick_click", "Stick Click", &actions.stickClickAction);
     createAction(XR_ACTION_TYPE_VIBRATION_OUTPUT, "haptic", "Rumble", &actions.hapticAction);
 

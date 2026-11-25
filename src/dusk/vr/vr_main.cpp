@@ -391,10 +391,14 @@ XrActionSet g_handActionSet = XR_NULL_HANDLE;
 // pose actions (same action set) -- see tick()'s per-frame sync below.
 XrAction g_triggerValueAction = XR_NULL_HANDLE;
 XrAction g_squeezeValueAction = XR_NULL_HANDLE;
+XrAction g_bumperAction = XR_NULL_HANDLE;
 XrAction g_thumbstickAction = XR_NULL_HANDLE;
 XrAction g_primaryClickAction = XR_NULL_HANDLE;
 XrAction g_secondaryClickAction = XR_NULL_HANDLE;
+XrAction g_tertiaryClickAction = XR_NULL_HANDLE;
+XrAction g_quaternaryClickAction = XR_NULL_HANDLE;
 XrAction g_menuClickAction = XR_NULL_HANDLE;
+XrAction g_toggleThirdPersonAction = XR_NULL_HANDLE;
 // NEW (2026-08-04, per explicit user request "make the right stick click
 // the pause menu"): right thumbstick click, additionally OR'd into
 // PAD_BUTTON_START in tick() below -- see vr_xr_bootstrap.hpp's
@@ -1148,10 +1152,14 @@ bool startup() {
         // is needed -- just carry the handles forward for tick() to query.
         g_triggerValueAction = handActions.triggerValueAction;
         g_squeezeValueAction = handActions.squeezeValueAction;
+        g_bumperAction = handActions.bumperAction;
         g_thumbstickAction = handActions.thumbstickAction;
         g_primaryClickAction = handActions.primaryClickAction;
         g_secondaryClickAction = handActions.secondaryClickAction;
+        g_tertiaryClickAction = handActions.tertiaryClickAction;
+        g_quaternaryClickAction = handActions.quaternaryClickAction;
         g_menuClickAction = handActions.menuClickAction;
+        g_toggleThirdPersonAction = handActions.toggleThirdPersonAction;
         g_stickClickAction = handActions.stickClickAction;
         g_hapticAction = handActions.hapticAction;
         g_leftHandPath = handActions.leftHandPath;
@@ -2187,15 +2195,29 @@ void tick(const dusk::game_clock::FrameTiming& pacing) {
     const float rightTrigger = getFloatAction(g_triggerValueAction, g_rightHandPath);
     const float rightSqueeze = getFloatAction(g_squeezeValueAction, g_rightHandPath);
     const float leftSqueeze = getFloatAction(g_squeezeValueAction, g_leftHandPath);
+    const bool rightBumperHeld = getBoolAction(g_bumperAction, g_rightHandPath);
+    const bool leftBumperHeld = getBoolAction(g_bumperAction, g_leftHandPath);
     const XrVector2f leftStick = getVec2Action(g_thumbstickAction, g_leftHandPath);
     const XrVector2f rightStick = getVec2Action(g_thumbstickAction, g_rightHandPath);
     const bool rightAHeld = getBoolAction(g_primaryClickAction, g_rightHandPath);
-    const bool leftXHeld = getBoolAction(g_primaryClickAction, g_leftHandPath);
     const bool rightBHeld = getBoolAction(g_secondaryClickAction, g_rightHandPath);
+    const bool rightXHeld = getBoolAction(g_tertiaryClickAction, g_rightHandPath);
+    const bool rightYHeld = getBoolAction(g_quaternaryClickAction, g_rightHandPath);
+    const bool leftXHeld = getBoolAction(g_primaryClickAction, g_leftHandPath);
     const bool leftYHeld = getBoolAction(g_secondaryClickAction, g_leftHandPath);
+    const bool leftAHeld = getBoolAction(g_tertiaryClickAction, g_leftHandPath);
+    const bool leftBHeld = getBoolAction(g_quaternaryClickAction, g_leftHandPath);
+    const bool rightMenuHeld = getBoolAction(g_menuClickAction, g_rightHandPath);
     const bool leftMenuHeld = getBoolAction(g_menuClickAction, g_leftHandPath);
+    const bool toggleThirdPerson = getBoolAction(g_toggleThirdPersonAction, g_leftHandPath) || getBoolAction(g_toggleThirdPersonAction, g_rightHandPath);
     const bool rightStickClickHeld = getBoolAction(g_stickClickAction, g_rightHandPath);
     const bool leftStickClickHeld = getBoolAction(g_stickClickAction, g_leftHandPath);
+
+    // toggle third person if requested
+    static bool lastThirdPersonToggleHeld = false;
+    if (toggleThirdPerson && !lastThirdPersonToggleHeld)
+        dusk::getSettings().game.vrThirdPerson.setOverrideValue(!dusk::getSettings().game.vrThirdPerson.getValue());
+    lastThirdPersonToggleHeld = toggleThirdPerson;
 
     // VR-menu-gamepad, plan step 3 (see vr_menu_gamepad.hpp) -- now wires
     // navigation too, on top of step 2's menu-open chord: left thumbstick
@@ -2232,7 +2254,7 @@ void tick(const dusk::game_clock::FrameTiming& pacing) {
     // disabled 2026-08-17 after seven failed rounds; re-enable/disable by
     // flipping kMenuChordDisabled below if this round also needs reverting.
     constexpr bool kMenuChordDisabled = false;
-    const bool menuChordHeldForGate = kMenuChordDisabled ? false : (leftMenuHeld || rightStickClickHeld);
+    const bool menuChordHeldForGate = kMenuChordDisabled ? false : (leftMenuHeld || rightMenuHeld || rightStickClickHeld);
     const float menuChordTriggerForGate = kMenuChordDisabled ? 0.f : rightTrigger;
     updateVrMenuGamepadState(leftStick.x, leftStick.y, rightAHeld, rightBHeld,
                               menuChordHeldForGate, menuChordTriggerForGate,
@@ -2498,10 +2520,16 @@ void tick(const dusk::game_clock::FrameTiming& pacing) {
     padStatus.err = PAD_ERR_NONE;
     if (rightAHeld) padStatus.button |= PAD_BUTTON_A;
     if (rightBHeld || leftSwingButtonHeld) padStatus.button |= PAD_BUTTON_B;
+    if (rightXHeld) padStatus.button |= PAD_BUTTON_X;
+    if (rightYHeld) padStatus.button |= PAD_BUTTON_Y;
     if (leftXHeld) padStatus.button |= PAD_BUTTON_RIGHT;  // D-pad right (was D-pad left, was X)
     if (leftYHeld) padStatus.button |= PAD_BUTTON_UP;     // D-pad up (was Y)
-    if (leftMenuHeld || rightStickClickHeld) padStatus.button |= PAD_BUTTON_START;
-    if (leftStickClickHeld) padStatus.button |= PAD_TRIGGER_Z;  // was D-pad right (superseded above, now Z)
+    if (leftAHeld) padStatus.button |= PAD_BUTTON_DOWN;     // D-pad down
+    if (leftBHeld) padStatus.button |= PAD_BUTTON_LEFT;     // D-pad left
+    if (leftMenuHeld || rightMenuHeld) padStatus.button |= PAD_BUTTON_START;
+    if (leftBumperHeld || rightBumperHeld) padStatus.button |= PAD_TRIGGER_Z;  // was D-pad right (superseded above, now Z)
+    if (leftStickClickHeld) padStatus.button |= PAD_BUTTON_LEFT_STICK;
+    if (rightStickClickHeld) padStatus.button |= PAD_BUTTON_RIGHT_STICK;
 
     // Deadzones/thresholds matched to typical thumbstick/trigger/squeeze
     // noise floors -- avoids a resting controller reporting a tiny nonzero
@@ -2513,11 +2541,15 @@ void tick(const dusk::game_clock::FrameTiming& pacing) {
     // While physically climbing the squeezes grab (vr_link::
     // updatePhysicalClimbState()) instead of pressing X / R.
     const bool squeezeClimbs = !screenMode && vr_link::isPhysicalClimbActive();
-    if (rightSqueeze > kSqueezeThreshold && !squeezeClimbs) padStatus.button |= PAD_BUTTON_X;  // was Z
-    if (rightTrigger > kTriggerDeadzone) padStatus.button |= PAD_BUTTON_Y;   // was analog R
+    //if (rightSqueeze > kSqueezeThreshold && !squeezeClimbs) padStatus.button |= PAD_BUTTON_X;  // was Z
+    //if (rightTrigger > kTriggerDeadzone) padStatus.button |= PAD_BUTTON_Y;   // was analog R
     if (leftTrigger > kTriggerDeadzone) {
         padStatus.button |= PAD_TRIGGER_L;
         padStatus.triggerLeft = static_cast<u8>(std::clamp(leftTrigger, 0.f, 1.f) * 255.f);
+    }
+    if (rightTrigger > kTriggerDeadzone) {
+        padStatus.button |= PAD_TRIGGER_R;
+        padStatus.triggerRight = static_cast<u8>(std::clamp(rightTrigger, 0.f, 1.f) * 255.f);
     }
     // R = raise shield (held, driven by left squeeze) OR a shield-bash
     // thrust pulse (see rightThrustForceRelease/Hold's own comment above for
