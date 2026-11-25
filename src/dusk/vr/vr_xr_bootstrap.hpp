@@ -1066,6 +1066,51 @@ inline HandActions createHandActionSet(XrInstance instance) {
     suggestForProfile("/interaction_profiles/valve/index_controller", indexBindings,
                       static_cast<uint32_t>(std::size(indexBindings)));
 
+    // Steam Frame controller
+    XrPath rightXClickPath = XR_NULL_PATH, rightYClickPath = XR_NULL_PATH;
+    XrPath leftDpadLeftClickPath = XR_NULL_PATH, leftDpadRightClickPath = XR_NULL_PATH;
+    XrPath leftViewClickPath = XR_NULL_PATH, rightMenuClickPath = XR_NULL_PATH;
+    XrPath leftDpadUpClickPath = XR_NULL_PATH, leftDpadDownClickPath = XR_NULL_PATH;
+    XrPath leftBumperPath = XR_NULL_PATH, rightBumperPath = XR_NULL_PATH;
+    xrStringToPath(instance, "/user/hand/right/input/x/click", &rightXClickPath);
+    xrStringToPath(instance, "/user/hand/right/input/y/click", &rightYClickPath);
+    xrStringToPath(instance, "/user/hand/right/input/bumper/click", &rightBumperPath);
+    xrStringToPath(instance, "/user/hand/right/input/menu/click", &rightMenuClickPath);
+    xrStringToPath(instance, "/user/hand/left/input/dpad_left/click", &leftDpadLeftClickPath);
+    xrStringToPath(instance, "/user/hand/left/input/dpad_right/click", &leftDpadRightClickPath);
+    xrStringToPath(instance, "/user/hand/left/input/dpad_up/click", &leftDpadUpClickPath);
+    xrStringToPath(instance, "/user/hand/left/input/dpad_down/click", &leftDpadDownClickPath);
+    xrStringToPath(instance, "/user/hand/left/input/bumper/click", &leftBumperPath);
+    xrStringToPath(instance, "/user/hand/left/input/view/click", &leftViewClickPath);
+    XrActionSuggestedBinding frameBindings[] = {
+        {actions.gripPoseAction, leftBindingPath},
+        {actions.gripPoseAction, rightBindingPath},
+        {actions.aimPoseAction, leftAimBindingPath},
+        {actions.aimPoseAction, rightAimBindingPath},
+        {actions.triggerValueAction, leftTriggerPath},
+        {actions.triggerValueAction, rightTriggerPath},
+        {actions.squeezeValueAction, leftSqueezePath},
+        {actions.squeezeValueAction, rightSqueezePath},
+        {actions.bumperAction, leftBumperPath},
+        {actions.bumperAction, rightBumperPath},
+        {actions.thumbstickAction, leftStickPath},
+        {actions.thumbstickAction, rightStickPath},
+        {actions.primaryClickAction, leftDpadRightClickPath},
+        {actions.primaryClickAction, rightAClickPath},
+        {actions.secondaryClickAction, leftDpadUpClickPath},
+        {actions.secondaryClickAction, rightBClickPath},
+        {actions.tertiaryClickAction, leftDpadDownClickPath},
+        {actions.tertiaryClickAction, rightXClickPath},
+        {actions.quaternaryClickAction, leftDpadLeftClickPath},
+        {actions.quaternaryClickAction, rightYClickPath},
+        {actions.menuClickAction, rightMenuClickPath},
+        {actions.toggleThirdPersonAction, leftViewClickPath},
+        {actions.hapticAction, leftHapticPath},
+        {actions.hapticAction, rightHapticPath},
+    };
+    suggestForProfile("/interaction_profiles/valve/frame_controller_valve", frameBindings,
+                      static_cast<uint32_t>(std::size(frameBindings)));
+
     return actions;
 }
 
